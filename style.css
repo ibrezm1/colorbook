@@ -279,6 +279,7 @@ input[type="range"] {
     background: white;
     overflow: hidden;
     cursor: crosshair;
+    touch-action: none;
 }
 
 .canvas-wrapper.cursor-pen {

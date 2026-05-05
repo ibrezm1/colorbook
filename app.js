@@ -69,9 +69,10 @@ function setupEventListeners() {
 
     // Mouse events on the container or color canvas
     // Since lineCanvas is pointer-events: none, events fall through to colorCanvas
-    colorCanvas.addEventListener('mousedown', startDrawing);
-    window.addEventListener('mousemove', draw);
-    window.addEventListener('mouseup', stopDrawing);
+    colorCanvas.addEventListener('pointerdown', startDrawing);
+    window.addEventListener('pointermove', draw);
+    window.addEventListener('pointerup', stopDrawing);
+    window.addEventListener('pointercancel', stopDrawing);
 
     clearBtn.addEventListener('click', clearCanvas);
     downloadBtn.addEventListener('click', downloadArt);
