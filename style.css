@@ -1,0 +1,400 @@
+:root {
+    --bg-color: #0f172a;
+    --panel-bg: rgba(30, 41, 59, 0.7);
+    --accent-primary: #38bdf8;
+    --accent-secondary: #818cf8;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --canvas-bg: #1e293b;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.light-theme {
+    --bg-color: #f1f5f9;
+    --panel-bg: rgba(255, 255, 255, 0.8);
+    --accent-primary: #0ea5e9;
+    --accent-secondary: #6366f1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --canvas-bg: #e2e8f0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease;
+}
+
+/* Header */
+header {
+    padding: 0.75rem 1.5rem;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+}
+
+h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.025em;
+}
+
+.active-status {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    padding: 0.25rem 1rem;
+    border-radius: 2rem;
+    gap: 1rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    color: var(--accent-primary);
+}
+
+.status-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.status-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--glass-border);
+}
+
+.color-preview {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Main Layout */
+main {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sidebar / Toolbar */
+.toolbar {
+    width: 280px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    border-right: 1px solid var(--glass-border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    z-index: 50;
+    overflow-y: auto;
+    transition: var(--transition);
+    position: relative;
+}
+
+.toolbar.collapsed {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+.sidebar-toggle {
+    position: fixed; /* Use fixed to avoid clipping by toolbar width */
+    top: 50%;
+    left: 280px; /* Match sidebar width */
+    transform: translateY(-50%);
+    width: 32px;
+    height: 64px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 0 8px 8px 0;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 200;
+    transition: var(--transition);
+}
+
+.toolbar.collapsed + .sidebar-toggle, 
+.toolbar.collapsed .sidebar-toggle {
+    left: 0;
+}
+
+.sidebar-toggle:hover {
+    background: var(--accent-secondary);
+    width: 40px;
+}
+
+.tool-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tool-section h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.tool-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.tool-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.tool-btn i {
+    font-size: 1.25rem;
+}
+
+/* Controls */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-primary);
+}
+
+.color-picker-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(209, 213, 219, 0.5); /* Light grey border */
+    transition: transform 0.1s, border-color 0.2s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.color-swatch.active {
+    border: 2px solid white;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Canvas Area */
+.canvas-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: 
+        linear-gradient(45deg, var(--canvas-bg) 25%, transparent 25%), 
+        linear-gradient(-45deg, var(--canvas-bg) 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, var(--canvas-bg) 75%), 
+        linear-gradient(-45deg, transparent 75%, var(--canvas-bg) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    overflow: hidden;
+}
+
+.canvas-wrapper {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: white;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.canvas-wrapper.cursor-pen {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l5 5"></path><circle cx="11" cy="11" r="2"></circle></svg>') 2 2, auto;
+}
+
+.canvas-wrapper.cursor-fill {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2l1.23 2.1a1 1 0 0 0 1.2.4l2.12-.7a1 1 0 0 1 1.25 1.25l-.7 2.12a1 1 0 0 0 .4 1.2L21.6 9.6a1 1 0 0 1 0 1.74l-2.1 1.23a1 1 0 0 0-.4 1.2l.7 2.12a1 1 0 0 1-1.25 1.25l-2.12-.7a1 1 0 0 0-1.2.4L14 21.6a1 1 0 0 1-1.74 0l-1.23-2.1a1 1 0 0 0-1.2-.4l-2.12.7a1 1 0 0 1-1.25-1.25l.7-2.12a1 1 0 0 0-.4-1.2L2.4 14.4a1 1 0 0 1 0-1.74l2.1-1.23a1 1 0 0 0 .4-1.2l-.7-2.12a1 1 0 0 1 1.25-1.25l2.12.7a1 1 0 0 0 1.2-.4L10 2.4a1 1 0 0 1 1.74 0z"></path></svg>') 12 12, auto;
+}
+
+canvas {
+    display: block;
+}
+
+#colorCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#lineCanvas {
+    position: relative;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    mix-blend-mode: multiply; /* Ensures lines blend nicely if needed, though we use transparency */
+}
+
+/* Upload Overlay */
+.upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+}
+
+.upload-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.upload-card {
+    background: var(--panel-bg);
+    border: 2px dashed var(--glass-border);
+    padding: 3rem;
+    border-radius: 1.5rem;
+    text-align: center;
+    max-width: 400px;
+}
+
+.upload-card i {
+    font-size: 3rem;
+    color: var(--accent-primary);
+    margin-bottom: 1.5rem;
+}
+
+.upload-btn {
+    background: var(--accent-primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: filter 0.2s;
+}
+
+.upload-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Actions Footer */
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: auto;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn.primary {
+    background: var(--accent-primary);
+    border: none;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.primary:hover {
+    filter: brightness(1.1);
+}
+
+/* Custom Cursor for Tools */
+.cursor-pen {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l5 5"></path><circle cx="11" cy="11" r="2"></circle></svg>') 0 24, auto;
+}
+
+.cursor-fill {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2l1.23 2.1a1 1 0 0 0 1.2.4l2.12-.7a1 1 0 0 1 1.25 1.25l-.7 2.12a1 1 0 0 0 .4 1.2L21.6 9.6a1 1 0 0 1 0 1.74l-2.1 1.23a1 1 0 0 0-.4 1.2l.7 2.12a1 1 0 0 1-1.25 1.25l-2.12-.7a1 1 0 0 0-1.2.4L14 21.6a1 1 0 0 1-1.74 0l-1.23-2.1a1 1 0 0 0-1.2-.4l-2.12.7a1 1 0 0 1-1.25-1.25l.7-2.12a1 1 0 0 0-.4-1.2L2.4 14.4a1 1 0 0 1 0-1.74l2.1-1.23a1 1 0 0 0 .4-1.2l-.7-2.12a1 1 0 0 1 1.25-1.25l2.12.7a1 1 0 0 0 1.2-.4L10 2.4a1 1 0 0 1 1.74 0z"></path></svg>') 12 12, auto;
+}

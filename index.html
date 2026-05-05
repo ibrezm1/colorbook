@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChromaSketch | Premium AI Coloring Book</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>ChromaSketch</h1>
+        </div>
+
+        <div class="active-status">
+            <div class="status-item">
+                <span class="status-label">Tool</span>
+                <div id="activeToolIcon" class="status-icon">
+                    <i data-lucide="pen-tool"></i>
+                </div>
+            </div>
+            <div class="status-divider"></div>
+            <div class="status-item">
+                <span class="status-label">Color</span>
+                <div id="activeColorIndicator" class="color-preview" style="background-color: #000000;"></div>
+            </div>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+            <button id="themeToggle" class="action-btn" title="Toggle Theme">
+                <i data-lucide="sun"></i>
+            </button>
+            <button id="downloadBtn" class="action-btn primary" title="Export Art">
+                <i data-lucide="download"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <aside class="toolbar" id="sidebar">
+            <div class="tool-section">
+                <h3>Tools</h3>
+                <div class="button-grid">
+                    <button id="penTool" class="tool-btn active" title="Pen Tool">
+                        <i data-lucide="pen-tool"></i>
+                    </button>
+                    <button id="fillTool" class="tool-btn" title="Flood Fill Tool">
+                        <i data-lucide="paint-bucket"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Brush Settings</h3>
+                <div class="control-group">
+                    <label for="brushSize">Size: <span id="sizeValue">5</span>px</label>
+                    <input type="range" id="brushSize" min="1" max="50" value="5">
+                </div>
+                <div class="control-group">
+                    <label for="opacity">Opacity: <span id="opacityValue">100</span>%</label>
+                    <input type="range" id="opacity" min="1" max="100" value="100">
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Colors</h3>
+                <div class="color-picker-wrapper" id="colorPalette">
+                    <!-- Basic Palette -->
+                    <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                    <div class="color-swatch" style="background: #ef4444;" data-color="#ef4444"></div>
+                    <div class="color-swatch" style="background: #f97316;" data-color="#f97316"></div>
+                    <div class="color-swatch" style="background: #eab308;" data-color="#eab308"></div>
+                    <div class="color-swatch" style="background: #22c55e;" data-color="#22c55e"></div>
+                    <div class="color-swatch" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                    <div class="color-swatch" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                    <div class="color-swatch" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                    <div class="color-swatch" style="background: #ec4899;" data-color="#ec4899"></div>
+                    <div class="color-swatch" style="background: #ffffff;" data-color="#ffffff"></div>
+                </div>
+
+                <div class="control-group" style="margin-top: 1rem;">
+                    <label>Recent Colors</label>
+                    <div class="color-picker-wrapper" id="recentColors" style="min-height: 32px;">
+                        <!-- Dynamically filled -->
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">No history</span>
+                    </div>
+                </div>
+                <input type="color" id="customColor" value="#000000" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid var(--glass-border); background: none; cursor: pointer; margin-top: 10px;">
+            </div>
+
+            <div class="tool-section actions">
+                <button id="clearBtn" class="action-btn" title="Clear All">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        </aside>
+
+        <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+            <i data-lucide="chevron-left"></i>
+        </button>
+
+        <section class="canvas-container" id="container">
+            <div class="upload-overlay" id="uploadOverlay">
+                <div class="upload-card">
+                    <i data-lucide="image-plus"></i>
+                    <h2>Create Coloring Page</h2>
+                    <p>Upload an image and we'll convert it into a coloring book style template.</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                        Select Image
+                    </button>
+                </div>
+            </div>
+            <div class="canvas-wrapper" style="position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: white;">
+                <canvas id="colorCanvas" style="position: absolute; top: 0; left: 0;"></canvas>
+                <canvas id="lineCanvas" style="position: relative; top: 0; left: 0; pointer-events: none;"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
