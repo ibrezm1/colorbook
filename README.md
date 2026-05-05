@@ -2,7 +2,7 @@
 
 ChromaSketch is a modern, high-performance web application that transforms any image into a fillable coloring book page. 
 
-[View Project on GitHub](https://github.com/ibrezm1/colorbook)
+[View Project on GitHub](https://github.com/ibrezm1/colorbook) | [**Live Demo**](https://ibrezm1.github.io/colorbook/)
 
 ## 🚀 Features
 
