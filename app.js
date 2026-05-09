@@ -6,7 +6,11 @@ const state = {
     opacity: 1,
     isDrawing: false,
     hasImage: false,
-    recentColors: []
+    recentColors: [],
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    pointers: new Map() // For multi-touch tracking
 };
 
 // DOM Elements
@@ -27,6 +31,13 @@ const colorPalette = document.getElementById('colorPalette');
 const customColor = document.getElementById('customColor');
 const clearBtn = document.getElementById('clearBtn');
 const downloadBtn = document.getElementById('downloadBtn');
+const canvasWrapper = document.getElementById('canvasWrapper');
+const zoomIndicator = document.getElementById('zoomIndicator');
+const fullscreenToggle = document.getElementById('fullscreenToggle');
+const zoomInBtn = document.getElementById('zoomIn');
+const zoomOutBtn = document.getElementById('zoomOut');
+const resetViewBtn = document.getElementById('resetView');
+const newImageBtn = document.getElementById('newImageBtn');
 
 // Initialize
 function init() {
@@ -67,12 +78,19 @@ function setupEventListeners() {
     customColor.addEventListener('input', (e) => setColor(e.target.value));
     imageInput.addEventListener('change', handleImageUpload);
 
-    // Mouse events on the container or color canvas
-    // Since lineCanvas is pointer-events: none, events fall through to colorCanvas
-    colorCanvas.addEventListener('pointerdown', startDrawing);
-    window.addEventListener('pointermove', draw);
-    window.addEventListener('pointerup', stopDrawing);
-    window.addEventListener('pointercancel', stopDrawing);
+    // Zoom/Pan/Draw Event Listeners
+    canvasWrapper.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+    canvasWrapper.addEventListener('wheel', handleWheel, { passive: false });
+
+    // New Controls
+    zoomInBtn.addEventListener('click', () => adjustZoom(0.2));
+    zoomOutBtn.addEventListener('click', () => adjustZoom(-0.2));
+    resetViewBtn.addEventListener('click', resetView);
+    fullscreenToggle.addEventListener('click', toggleFullscreen);
+    newImageBtn.addEventListener('click', () => imageInput.click());
 
     clearBtn.addEventListener('click', clearCanvas);
     downloadBtn.addEventListener('click', downloadArt);
@@ -148,7 +166,7 @@ function updateRecentColors(color) {
 function renderRecentColors() {
     const container = document.getElementById('recentColors');
     if (state.recentColors.length === 0) {
-        container.innerHTML = '<span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">No history</span>';
+        container.innerHTML = '';
         return;
     }
 
@@ -198,6 +216,8 @@ function processImage(img) {
     tempCanvas.width = width;
     tempCanvas.height = height;
     const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.fillStyle = 'white';
+    tempCtx.fillRect(0, 0, width, height);
     tempCtx.drawImage(img, 0, 0, width, height);
     
     const imageData = tempCtx.getImageData(0, 0, width, height);
@@ -224,6 +244,7 @@ function processImage(img) {
     uploadOverlay.classList.add('hidden');
     state.hasImage = true;
     setTool('pen');
+    resetView();
 }
 
 let lastX = 0;
@@ -262,6 +283,140 @@ function draw(e) {
 function stopDrawing() {
     state.isDrawing = false;
     colorCtx.globalAlpha = 1.0;
+}
+
+// Pointer Handling for Multi-touch (Pinch/Pan)
+let lastPinchDist = 0;
+let lastPinchMidpoint = { x: 0, y: 0 };
+
+function handlePointerDown(e) {
+    state.pointers.set(e.pointerId, e);
+    
+    if (state.pointers.size === 1 && state.hasImage) {
+        startDrawing(e);
+    } else if (state.pointers.size === 2) {
+        state.isDrawing = false; // Stop drawing if second finger added
+        const pts = Array.from(state.pointers.values());
+        lastPinchDist = getDistance(pts[0], pts[1]);
+        lastPinchMidpoint = getMidpoint(pts[0], pts[1]);
+    }
+}
+
+function handlePointerMove(e) {
+    if (!state.pointers.has(e.pointerId)) return;
+    state.pointers.set(e.pointerId, e);
+
+    if (state.pointers.size === 1) {
+        if (state.isDrawing) {
+            draw(e);
+        }
+    } else if (state.pointers.size === 2) {
+        const pts = Array.from(state.pointers.values());
+        
+        // 1. Zoom
+        const dist = getDistance(pts[0], pts[1]);
+        const zoomFactor = dist / lastPinchDist;
+        const newZoom = Math.min(Math.max(state.zoom * zoomFactor, 0.5), 10);
+        
+        // 2. Pan
+        const midpoint = getMidpoint(pts[0], pts[1]);
+        const dx = midpoint.x - lastPinchMidpoint.x;
+        const dy = midpoint.y - lastPinchMidpoint.y;
+        
+        state.panX += dx;
+        state.panY += dy;
+        state.zoom = newZoom;
+        
+        lastPinchDist = dist;
+        lastPinchMidpoint = midpoint;
+        updateTransform();
+    }
+}
+
+function handlePointerUp(e) {
+    state.pointers.delete(e.pointerId);
+    if (state.pointers.size < 2) {
+        lastPinchDist = 0;
+    }
+    if (state.pointers.size === 0) {
+        stopDrawing();
+    }
+}
+
+function handleWheel(e) {
+    e.preventDefault();
+    const zoomSpeed = 0.001;
+    const delta = -e.deltaY;
+    const factor = Math.pow(1.1, delta / 100);
+    const newZoom = Math.min(Math.max(state.zoom * factor, 0.5), 10);
+    
+    // Zoom towards mouse position
+    // (This is a bit more complex, for now let's just zoom center)
+    state.zoom = newZoom;
+    updateTransform();
+}
+
+function updateTransform() {
+    canvasWrapper.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+    zoomIndicator.textContent = `${Math.round(state.zoom * 100)}%`;
+}
+
+function adjustZoom(delta) {
+    state.zoom = Math.min(Math.max(state.zoom + delta, 0.5), 10);
+    updateTransform();
+}
+
+function fitToScreen() {
+    if (!state.hasImage) return;
+    
+    const container = document.getElementById('container');
+    const padding = 40; // Maintain a small margin
+    
+    const availableWidth = container.clientWidth - padding;
+    const availableHeight = container.clientHeight - padding;
+    
+    // Calculate scale to fit current container
+    const scale = Math.min(
+        availableWidth / colorCanvas.width,
+        availableHeight / colorCanvas.height
+    );
+    
+    state.zoom = scale;
+    state.panX = 0;
+    state.panY = 0;
+    updateTransform();
+}
+
+function resetView() {
+    fitToScreen();
+}
+
+async function toggleFullscreen() {
+    const elem = document.documentElement;
+    if (!document.fullscreenElement) {
+        try {
+            await elem.requestFullscreen();
+            fullscreenToggle.innerHTML = '<i data-lucide="minimize"></i>';
+        } catch (err) {
+            console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        }
+    } else {
+        document.exitFullscreen();
+        fullscreenToggle.innerHTML = '<i data-lucide="maximize"></i>';
+    }
+    lucide.createIcons();
+}
+
+// Utility functions
+function getDistance(p1, p2) {
+    return Math.sqrt(Math.pow(p2.clientX - p1.clientX, 2) + Math.pow(p2.clientY - p1.clientY, 2));
+}
+
+function getMidpoint(p1, p2) {
+    return {
+        x: (p1.clientX + p2.clientX) / 2,
+        y: (p1.clientY + p2.clientY) / 2
+    };
 }
 
 function getMousePos(e) {

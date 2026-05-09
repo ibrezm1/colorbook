@@ -18,22 +18,45 @@
             <h1>ChromaSketch</h1>
         </div>
 
-        <div class="active-status">
-            <div class="status-item">
-                <span class="status-label">Tool</span>
-                <div id="activeToolIcon" class="status-icon">
-                    <i data-lucide="pen-tool"></i>
-                </div>
+        <div class="header-center">
+            <div id="colorPalette" class="header-palette">
+                <!-- Basic Palette -->
+                <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                <div class="color-swatch" style="background: #ef4444;" data-color="#ef4444"></div>
+                <div class="color-swatch" style="background: #f97316;" data-color="#f97316"></div>
+                <div class="color-swatch" style="background: #eab308;" data-color="#eab308"></div>
+                <div class="color-swatch" style="background: #22c55e;" data-color="#22c55e"></div>
+                <div class="color-swatch" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                <div class="color-swatch" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                <div class="color-swatch" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                <div class="color-swatch" style="background: #ec4899;" data-color="#ec4899"></div>
+                <div class="color-swatch" style="background: #78350f;" data-color="#78350f"></div>
+                <div class="color-swatch" style="background: #64748b;" data-color="#64748b"></div>
+                <div class="color-swatch" style="background: #ffffff;" data-color="#ffffff"></div>
             </div>
-            <div class="status-divider"></div>
-            <div class="status-item">
-                <span class="status-label">Color</span>
+            
+            <div class="header-divider"></div>
+            
+            <div id="recentColors" class="header-palette recent">
+                <!-- Dynamically filled -->
+            </div>
+
+            <div class="header-divider"></div>
+
+            <div class="custom-color-trigger">
+                <input type="color" id="customColor" value="#000000">
                 <div id="activeColorIndicator" class="color-preview" style="background-color: #000000;"></div>
             </div>
         </div>
         <div class="header-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+            <button id="newImageBtn" class="action-btn" title="New Image">
+                <i data-lucide="plus-circle"></i>
+            </button>
             <button id="themeToggle" class="action-btn" title="Toggle Theme">
                 <i data-lucide="sun"></i>
+            </button>
+            <button id="fullscreenToggle" class="action-btn" title="Toggle Fullscreen">
+                <i data-lucide="maximize"></i>
             </button>
             <button id="downloadBtn" class="action-btn primary" title="Export Art">
                 <i data-lucide="download"></i>
@@ -67,31 +90,6 @@
                 </div>
             </div>
 
-            <div class="tool-section">
-                <h3>Colors</h3>
-                <div class="color-picker-wrapper" id="colorPalette">
-                    <!-- Basic Palette -->
-                    <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
-                    <div class="color-swatch" style="background: #ef4444;" data-color="#ef4444"></div>
-                    <div class="color-swatch" style="background: #f97316;" data-color="#f97316"></div>
-                    <div class="color-swatch" style="background: #eab308;" data-color="#eab308"></div>
-                    <div class="color-swatch" style="background: #22c55e;" data-color="#22c55e"></div>
-                    <div class="color-swatch" style="background: #06b6d4;" data-color="#06b6d4"></div>
-                    <div class="color-swatch" style="background: #3b82f6;" data-color="#3b82f6"></div>
-                    <div class="color-swatch" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
-                    <div class="color-swatch" style="background: #ec4899;" data-color="#ec4899"></div>
-                    <div class="color-swatch" style="background: #ffffff;" data-color="#ffffff"></div>
-                </div>
-
-                <div class="control-group" style="margin-top: 1rem;">
-                    <label>Recent Colors</label>
-                    <div class="color-picker-wrapper" id="recentColors" style="min-height: 32px;">
-                        <!-- Dynamically filled -->
-                        <span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">No history</span>
-                    </div>
-                </div>
-                <input type="color" id="customColor" value="#000000" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid var(--glass-border); background: none; cursor: pointer; margin-top: 10px;">
-            </div>
 
             <div class="tool-section actions">
                 <button id="clearBtn" class="action-btn" title="Clear All">
@@ -116,9 +114,23 @@
                     </button>
                 </div>
             </div>
-            <div class="canvas-wrapper" style="position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: white;">
+            <div class="canvas-wrapper" id="canvasWrapper" style="position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: white;">
                 <canvas id="colorCanvas" style="position: absolute; top: 0; left: 0;"></canvas>
                 <canvas id="lineCanvas" style="position: relative; top: 0; left: 0; pointer-events: none;"></canvas>
+            </div>
+            
+            <div class="zoom-indicator" id="zoomIndicator">100%</div>
+            
+            <div class="canvas-controls">
+                <button id="zoomIn" class="control-btn" title="Zoom In">
+                    <i data-lucide="zoom-in"></i>
+                </button>
+                <button id="zoomOut" class="control-btn" title="Zoom Out">
+                    <i data-lucide="zoom-out"></i>
+                </button>
+                <button id="resetView" class="control-btn" title="Fit to Screen">
+                    <i data-lucide="refresh-cw"></i>
+                </button>
             </div>
         </section>
     </main>
