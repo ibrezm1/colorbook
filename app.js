@@ -191,27 +191,32 @@ async function handleImageUpload(e) {
 }
 
 function processImage(img) {
-    const container = document.getElementById('container');
-    const maxWidth = container.clientWidth * 0.9;
-    const maxHeight = container.clientHeight * 0.9;
-    
+    // Increase internal resolution for sharpness
+    // We cap it at 4096px to prevent memory issues on lower-end devices
+    const MAX_CANVAS_DIM = 4096;
     let width = img.width;
     let height = img.height;
-    const ratio = Math.min(maxWidth / width, maxHeight / height);
-    width *= ratio;
-    height *= ratio;
 
-    // Set both canvases to same size
+    if (width > MAX_CANVAS_DIM || height > MAX_CANVAS_DIM) {
+        const ratio = Math.min(MAX_CANVAS_DIM / width, MAX_CANVAS_DIM / height);
+        width *= ratio;
+        height *= ratio;
+    }
+
+    // Set both canvases to high-res internal size
     [lineCanvas, colorCanvas].forEach(c => {
         c.width = width;
         c.height = height;
+        // Ensure CSS display size matches
+        c.style.width = 'auto';
+        c.style.height = 'auto';
     });
 
     // Clear color canvas with white
     colorCtx.fillStyle = 'white';
     colorCtx.fillRect(0, 0, width, height);
     
-    // Process lines
+    // Process lines at high resolution
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = width;
     tempCanvas.height = height;
@@ -227,9 +232,9 @@ function processImage(img) {
         const r = data[i], g = data[i + 1], b = data[i + 2];
         const gray = 0.299 * r + 0.587 * g + 0.114 * b;
         
-        // If it's light, make it transparent
-        // If it's dark, make it pure black
-        if (gray > 120) {
+        // Use a slightly softer threshold or just pure black for coloring book
+        // Increasing resolution makes even hard thresholds look much better
+        if (gray > 140) { // Slightly higher threshold to capture more faint lines
             data[i + 3] = 0; // Transparent
         } else {
             data[i] = 0;
@@ -244,6 +249,8 @@ function processImage(img) {
     uploadOverlay.classList.add('hidden');
     state.hasImage = true;
     setTool('pen');
+    
+    // Reset view will now correctly scale the high-res canvas to fit the screen
     resetView();
 }
 
