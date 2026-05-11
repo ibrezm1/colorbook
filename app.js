@@ -92,6 +92,9 @@ function setupEventListeners() {
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
+    // Prevent context menu (Save Image popup) on the canvas
+    canvasWrapper.addEventListener('contextmenu', (e) => e.preventDefault());
+
     // New Controls
     zoomInBtn.addEventListener('click', () => adjustZoom(0.2));
     zoomOutBtn.addEventListener('click', () => adjustZoom(-0.2));
