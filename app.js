@@ -241,32 +241,50 @@ async function handleImageUpload(e) {
 }
 
 function processImage(img) {
-    // Increase internal resolution for sharpness
-    // We cap it at 8192px (8K) to support large professional images
+    // Keep internal canvas resolution at full image size (up to 8K)
     const MAX_CANVAS_DIM = 8192;
     let width = img.width;
     let height = img.height;
 
     if (width > MAX_CANVAS_DIM || height > MAX_CANVAS_DIM) {
         const ratio = Math.min(MAX_CANVAS_DIM / width, MAX_CANVAS_DIM / height);
-        width *= ratio;
-        height *= ratio;
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
     }
 
-    // Set both canvases to high-res internal size
+    // Calculate a CSS display size that fits within the viewport
+    const container = document.getElementById('container');
+    const padding = 60;
+    const availableWidth = container.clientWidth - padding;
+    const availableHeight = container.clientHeight - padding;
+    const displayScale = Math.min(availableWidth / width, availableHeight / height, 1); // never upscale beyond 100%
+    const displayWidth = Math.round(width * displayScale);
+    const displayHeight = Math.round(height * displayScale);
+
+    // Set internal (pixel) resolution on both canvases
     [lineCanvas, colorCanvas].forEach(c => {
         c.width = width;
         c.height = height;
-        // Ensure CSS display size matches
-        c.style.width = 'auto';
-        c.style.height = 'auto';
+        // Set CSS display size so the canvas visually fits the viewport
+        c.style.width = displayWidth + 'px';
+        c.style.height = displayHeight + 'px';
     });
+
+    // Set the wrapper size to match the visual display size
+    canvasWrapper.style.width = displayWidth + 'px';
+    canvasWrapper.style.height = displayHeight + 'px';
+
+    // Reset transform so no stale zoom/pan is applied
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    updateTransform();
 
     // Clear color canvas with white
     colorCtx.fillStyle = 'white';
     colorCtx.fillRect(0, 0, width, height);
     
-    // Process lines at high resolution
+    // Process lines at full high resolution
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = width;
     tempCanvas.height = height;
@@ -282,15 +300,13 @@ function processImage(img) {
         const r = data[i], g = data[i + 1], b = data[i + 2];
         const gray = 0.299 * r + 0.587 * g + 0.114 * b;
         
-        // Use a slightly softer threshold or just pure black for coloring book
-        // Increasing resolution makes even hard thresholds look much better
-        if (gray > 140) { // Slightly higher threshold to capture more faint lines
-            data[i + 3] = 0; // Transparent
+        if (gray > 140) {
+            data[i + 3] = 0; // Transparent (background)
         } else {
             data[i] = 0;
             data[i + 1] = 0;
             data[i + 2] = 0;
-            data[i + 3] = 255; // Opaque Black
+            data[i + 3] = 255; // Opaque Black (lines)
         }
     }
 
@@ -299,9 +315,6 @@ function processImage(img) {
     uploadOverlay.classList.add('hidden');
     state.hasImage = true;
     setTool('pen');
-    
-    // Reset view will now correctly scale the high-res canvas to fit the screen
-    resetView();
 }
 
 let lastX = 0;
@@ -427,20 +440,9 @@ function adjustZoom(delta) {
 
 function fitToScreen() {
     if (!state.hasImage) return;
-    
-    const container = document.getElementById('container');
-    const padding = 40; // Maintain a small margin
-    
-    const availableWidth = container.clientWidth - padding;
-    const availableHeight = container.clientHeight - padding;
-    
-    // Calculate scale to fit current container
-    const scale = Math.min(
-        availableWidth / colorCanvas.width,
-        availableHeight / colorCanvas.height
-    );
-    
-    state.zoom = scale;
+    // The canvas CSS display size is already set to fit the screen on load.
+    // So "fit to screen" just means reset zoom=1 and pan=0.
+    state.zoom = 1;
     state.panX = 0;
     state.panY = 0;
     updateTransform();
