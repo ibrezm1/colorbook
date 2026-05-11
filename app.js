@@ -202,8 +202,8 @@ async function handleImageUpload(e) {
 
 function processImage(img) {
     // Increase internal resolution for sharpness
-    // We cap it at 4096px to prevent memory issues on lower-end devices
-    const MAX_CANVAS_DIM = 4096;
+    // We cap it at 8192px (8K) to support large professional images
+    const MAX_CANVAS_DIM = 8192;
     let width = img.width;
     let height = img.height;
 
