@@ -80,10 +80,17 @@ function setupEventListeners() {
 
     // Zoom/Pan/Draw Event Listeners
     canvasWrapper.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
     window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('pointercancel', handlePointerUp);
     canvasWrapper.addEventListener('wheel', handleWheel, { passive: false });
+    
+    // Prevent common iPad gestures that might interfere
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
 
     // New Controls
     zoomInBtn.addEventListener('click', () => adjustZoom(0.2));
@@ -300,6 +307,8 @@ function handlePointerDown(e) {
     state.pointers.set(e.pointerId, e);
     
     if (state.pointers.size === 1 && state.hasImage) {
+        // Support for Apple Pencil (pen) - can draw even if palm is near
+        // If it's a pen, we might want to allow pressure-based effects later
         startDrawing(e);
     } else if (state.pointers.size === 2) {
         state.isDrawing = false; // Stop drawing if second finger added
