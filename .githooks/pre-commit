@@ -1,0 +1,32 @@
+#!/bin/sh
+# Pre-commit hook: auto-increment build number and stamp buildTime in version.json
+
+VERSION_FILE="version.json"
+
+if [ ! -f "$VERSION_FILE" ]; then
+  echo '{"version":"1.0.1","buildNumber":1,"buildTime":""}' > "$VERSION_FILE"
+fi
+
+# Read current values
+CURRENT_BUILD=$(node -e "const v=require('./$VERSION_FILE'); console.log(v.buildNumber || 0);")
+NEW_BUILD=$((CURRENT_BUILD + 1))
+BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Compute semantic version: major.minor.buildNumber
+MAJOR=$(node -e "const v=require('./$VERSION_FILE'); const p=(v.version||'1.0.0').split('.'); console.log(p[0]||'1');")
+MINOR=$(node -e "const v=require('./$VERSION_FILE'); const p=(v.version||'1.0.0').split('.'); console.log(p[1]||'0');")
+NEW_VERSION="${MAJOR}.${MINOR}.${NEW_BUILD}"
+
+# Write updated version.json
+cat > "$VERSION_FILE" <<EOF
+{
+  "version": "${NEW_VERSION}",
+  "buildNumber": ${NEW_BUILD},
+  "buildTime": "${BUILD_TIME}"
+}
+EOF
+
+# Stage the updated file so it's included in this commit
+git add "$VERSION_FILE"
+
+echo "✅ version.json updated → v${NEW_VERSION} (build #${NEW_BUILD})"

@@ -48,16 +48,17 @@ function init() {
 async function updatePublishStatus() {
     const publishTimeEl = document.getElementById('publishTime');
     try {
-        // Fetch last commit from GitHub API for this repo
-        const response = await fetch('https://api.github.com/repos/ibrezm1/colorbook/commits/main');
-        if (!response.ok) throw new Error('API limit');
+        // Fetch local version.json stamped at deploy time
+        const response = await fetch(`./version.json?_=${Date.now()}`); // cache-bust
+        if (!response.ok) throw new Error('version.json not found');
         
         const data = await response.json();
-        const lastCommitDate = new Date(data.commit.committer.date);
+        const buildTime = new Date(data.buildTime);
+        const version = data.version || '?';
         
         function updateTimeAgo() {
             const now = new Date();
-            const diffInSeconds = Math.floor((now - lastCommitDate) / 1000);
+            const diffInSeconds = Math.floor((now - buildTime) / 1000);
             
             let timeAgo = '';
             if (diffInSeconds < 60) timeAgo = 'just now';
@@ -72,15 +73,14 @@ async function updatePublishStatus() {
                 timeAgo = `${days} ${days === 1 ? 'day' : 'days'} ago`;
             }
             
-            publishTimeEl.textContent = `Deployed ${timeAgo}`;
+            publishTimeEl.textContent = `v${version} · ${timeAgo}`;
         }
         
         updateTimeAgo();
-        // Update every minute
-        setInterval(updateTimeAgo, 60000);
+        setInterval(updateTimeAgo, 60000); // refresh display every minute
     } catch (error) {
-        publishTimeEl.textContent = 'Deployed recently';
-        console.warn('Could not fetch exact publish time:', error);
+        publishTimeEl.textContent = 'v1.0.0';
+        console.warn('Could not read version.json:', error);
     }
 }
 
