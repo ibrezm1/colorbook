@@ -42,6 +42,46 @@ const newImageBtn = document.getElementById('newImageBtn');
 // Initialize
 function init() {
     setupEventListeners();
+    updatePublishStatus();
+}
+
+async function updatePublishStatus() {
+    const publishTimeEl = document.getElementById('publishTime');
+    try {
+        // Fetch last commit from GitHub API for this repo
+        const response = await fetch('https://api.github.com/repos/ibrezm1/colorbook/commits/main');
+        if (!response.ok) throw new Error('API limit');
+        
+        const data = await response.json();
+        const lastCommitDate = new Date(data.commit.committer.date);
+        
+        function updateTimeAgo() {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - lastCommitDate) / 1000);
+            
+            let timeAgo = '';
+            if (diffInSeconds < 60) timeAgo = 'just now';
+            else if (diffInSeconds < 3600) {
+                const mins = Math.floor(diffInSeconds / 60);
+                timeAgo = `${mins} ${mins === 1 ? 'min' : 'mins'} ago`;
+            } else if (diffInSeconds < 86400) {
+                const hrs = Math.floor(diffInSeconds / 3600);
+                timeAgo = `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ago`;
+            } else {
+                const days = Math.floor(diffInSeconds / 86400);
+                timeAgo = `${days} ${days === 1 ? 'day' : 'days'} ago`;
+            }
+            
+            publishTimeEl.textContent = `Deployed ${timeAgo}`;
+        }
+        
+        updateTimeAgo();
+        // Update every minute
+        setInterval(updateTimeAgo, 60000);
+    } catch (error) {
+        publishTimeEl.textContent = 'Deployed recently';
+        console.warn('Could not fetch exact publish time:', error);
+    }
 }
 
 function setupEventListeners() {
