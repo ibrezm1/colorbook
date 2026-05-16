@@ -10,16 +10,23 @@ const state = {
     zoom: 1,
     panX: 0,
     panY: 0,
-    pointers: new Map() // For multi-touch tracking
+    pointers: new Map(), // For multi-touch tracking
+    showReference: false,
+    outlineFile: null,
+    referenceFile: null
 };
 
 // DOM Elements
 const lineCanvas = document.getElementById('lineCanvas');
+const refCanvas = document.getElementById('refCanvas');
 const colorCanvas = document.getElementById('colorCanvas');
 const lineCtx = lineCanvas.getContext('2d');
+const refCtx = refCanvas.getContext('2d');
 const colorCtx = colorCanvas.getContext('2d', { willReadFrequently: true });
 
-const imageInput = document.getElementById('imageInput');
+const outlineInput = document.getElementById('outlineInput');
+const referenceInput = document.getElementById('referenceInput');
+const startColoringBtn = document.getElementById('startColoringBtn');
 const uploadOverlay = document.getElementById('uploadOverlay');
 const penTool = document.getElementById('penTool');
 const fillTool = document.getElementById('fillTool');
@@ -38,6 +45,7 @@ const zoomInBtn = document.getElementById('zoomIn');
 const zoomOutBtn = document.getElementById('zoomOut');
 const resetViewBtn = document.getElementById('resetView');
 const newImageBtn = document.getElementById('newImageBtn');
+const toggleReferenceBtn = document.getElementById('toggleReference');
 
 // Initialize
 function init() {
@@ -116,7 +124,10 @@ function setupEventListeners() {
     });
 
     customColor.addEventListener('input', (e) => setColor(e.target.value));
-    imageInput.addEventListener('change', handleImageUpload);
+    
+    outlineInput.addEventListener('change', (e) => handleFileSelection(e, 'outline'));
+    referenceInput.addEventListener('change', (e) => handleFileSelection(e, 'reference'));
+    startColoringBtn.addEventListener('click', startColoring);
 
     // Zoom/Pan/Draw Event Listeners
     canvasWrapper.addEventListener('pointerdown', handlePointerDown);
@@ -139,8 +150,15 @@ function setupEventListeners() {
     zoomInBtn.addEventListener('click', () => adjustZoom(0.2));
     zoomOutBtn.addEventListener('click', () => adjustZoom(-0.2));
     resetViewBtn.addEventListener('click', resetView);
+    toggleReferenceBtn.addEventListener('click', toggleReference);
     fullscreenToggle.addEventListener('click', toggleFullscreen);
-    newImageBtn.addEventListener('click', () => imageInput.click());
+    newImageBtn.addEventListener('click', () => {
+        uploadOverlay.classList.remove('hidden');
+        state.hasImage = false;
+        state.outlineFile = null;
+        state.referenceFile = null;
+        updateUploadUI();
+    });
 
     clearBtn.addEventListener('click', clearCanvas);
     downloadBtn.addEventListener('click', downloadArt);
@@ -227,24 +245,60 @@ function renderRecentColors() {
     `).join('');
 }
 
-async function handleImageUpload(e) {
+function handleFileSelection(e, type) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => processImage(img);
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+    if (type === 'outline') {
+        state.outlineFile = file;
+        document.getElementById('outlineName').textContent = file.name;
+    } else {
+        state.referenceFile = file;
+        document.getElementById('referenceName').textContent = file.name;
+    }
+    updateUploadUI();
 }
 
-function processImage(img) {
+function updateUploadUI() {
+    const startBtn = document.getElementById('startColoringBtn');
+    startBtn.disabled = !state.outlineFile;
+    
+    // Clear display if starting new
+    if (!state.outlineFile) {
+        document.getElementById('outlineName').textContent = 'No file selected';
+        document.getElementById('referenceName').textContent = 'No file selected';
+    }
+}
+
+async function startColoring() {
+    if (!state.outlineFile) return;
+
+    const outlineImg = await loadImage(state.outlineFile);
+    let referenceImg = null;
+    if (state.referenceFile) {
+        referenceImg = await loadImage(state.referenceFile);
+    }
+
+    processImages(outlineImg, referenceImg);
+}
+
+function loadImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function processImages(outlineImg, referenceImg) {
     // Keep internal canvas resolution at full image size (up to 8K)
     const MAX_CANVAS_DIM = 8192;
-    let width = img.width;
-    let height = img.height;
+    let width = outlineImg.width;
+    let height = outlineImg.height;
 
     if (width > MAX_CANVAS_DIM || height > MAX_CANVAS_DIM) {
         const ratio = Math.min(MAX_CANVAS_DIM / width, MAX_CANVAS_DIM / height);
@@ -257,15 +311,14 @@ function processImage(img) {
     const padding = 60;
     const availableWidth = container.clientWidth - padding;
     const availableHeight = container.clientHeight - padding;
-    const displayScale = Math.min(availableWidth / width, availableHeight / height, 1); // never upscale beyond 100%
+    const displayScale = Math.min(availableWidth / width, availableHeight / height, 1);
     const displayWidth = Math.round(width * displayScale);
     const displayHeight = Math.round(height * displayScale);
 
-    // Set internal (pixel) resolution on both canvases
-    [lineCanvas, colorCanvas].forEach(c => {
+    // Set internal (pixel) resolution on all canvases
+    [lineCanvas, colorCanvas, refCanvas].forEach(c => {
         c.width = width;
         c.height = height;
-        // Set CSS display size so the canvas visually fits the viewport
         c.style.width = displayWidth + 'px';
         c.style.height = displayHeight + 'px';
     });
@@ -274,7 +327,7 @@ function processImage(img) {
     canvasWrapper.style.width = displayWidth + 'px';
     canvasWrapper.style.height = displayHeight + 'px';
 
-    // Reset transform so no stale zoom/pan is applied
+    // Reset transform
     state.zoom = 1;
     state.panX = 0;
     state.panY = 0;
@@ -284,14 +337,17 @@ function processImage(img) {
     colorCtx.fillStyle = 'white';
     colorCtx.fillRect(0, 0, width, height);
     
-    // Process lines at full high resolution
+    // Clear ref canvas
+    refCtx.clearRect(0, 0, width, height);
+    
+    // Process outline lines
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = width;
     tempCanvas.height = height;
     const tempCtx = tempCanvas.getContext('2d');
     tempCtx.fillStyle = 'white';
     tempCtx.fillRect(0, 0, width, height);
-    tempCtx.drawImage(img, 0, 0, width, height);
+    tempCtx.drawImage(outlineImg, 0, 0, width, height);
     
     const imageData = tempCtx.getImageData(0, 0, width, height);
     const data = imageData.data;
@@ -301,20 +357,39 @@ function processImage(img) {
         const gray = 0.299 * r + 0.587 * g + 0.114 * b;
         
         if (gray > 140) {
-            data[i + 3] = 0; // Transparent (background)
+            data[i + 3] = 0; // Transparent
         } else {
             data[i] = 0;
             data[i + 1] = 0;
             data[i + 2] = 0;
-            data[i + 3] = 255; // Opaque Black (lines)
+            data[i + 3] = 255; // Opaque Black
         }
     }
-
     lineCtx.putImageData(imageData, 0, 0);
+
+    // Process reference image if available
+    if (referenceImg) {
+        refCtx.drawImage(referenceImg, 0, 0, width, height);
+        toggleReferenceBtn.style.display = 'flex';
+    } else {
+        toggleReferenceBtn.style.display = 'none';
+    }
     
     uploadOverlay.classList.add('hidden');
     state.hasImage = true;
+    state.showReference = false;
+    updateReferenceVisibility();
     setTool('pen');
+}
+
+function toggleReference() {
+    state.showReference = !state.showReference;
+    updateReferenceVisibility();
+}
+
+function updateReferenceVisibility() {
+    refCanvas.style.opacity = state.showReference ? '1' : '0';
+    toggleReferenceBtn.classList.toggle('active', state.showReference);
 }
 
 let lastX = 0;

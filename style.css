@@ -80,6 +80,23 @@ header {
     opacity: 0.9;
 }
 
+.active-tool-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 8px;
+    color: var(--accent-primary);
+}
+
+.active-tool-badge i {
+    width: 18px;
+    height: 18px;
+}
+
 .status-dot {
     width: 6px;
     height: 6px;
@@ -353,6 +370,15 @@ input[type="range"] {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
+#refCanvas {
+    mix-blend-mode: normal;
+    z-index: 2;
+}
+
+#lineCanvas {
+    z-index: 3;
+}
+
 /* Canvas Area */
 .canvas-container {
     flex: 1;
@@ -441,7 +467,56 @@ canvas {
     padding: 3rem;
     border-radius: 1.5rem;
     text-align: center;
-    max-width: 400px;
+    max-width: 500px;
+}
+
+.upload-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.upload-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    justify-content: center;
+}
+
+.upload-label:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-primary);
+}
+
+.upload-label i {
+    font-size: 1.25rem !important;
+    margin-bottom: 0 !important;
+}
+
+.file-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.upload-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--text-secondary);
 }
 
 .upload-card i {
@@ -540,6 +615,19 @@ canvas {
     background: var(--accent-primary);
     color: white;
     transform: scale(1.1);
+}
+
+.control-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 0 15px var(--accent-primary);
+    animation: glow 2s infinite;
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px var(--accent-primary); }
+    50% { box-shadow: 0 0 20px var(--accent-primary); }
+    100% { box-shadow: 0 0 5px var(--accent-primary); }
 }
 
 .control-btn i {

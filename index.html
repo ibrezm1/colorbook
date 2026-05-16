@@ -24,6 +24,9 @@
     <header>
         <div class="logo-container">
             <h1>ChromaSketch</h1>
+            <div id="activeToolIcon" class="active-tool-badge" title="Active Tool">
+                <i data-lucide="pen-tool"></i>
+            </div>
             <div id="publishStatus" class="publish-badge">
                 <span class="status-dot"></span>
                 <span id="publishTime">checking status...</span>
@@ -119,21 +122,45 @@
                 <div class="upload-card">
                     <i data-lucide="image-plus"></i>
                     <h2>Create Coloring Page</h2>
-                    <p>Upload an image and we'll convert it into a coloring book style template.</p>
-                    <input type="file" id="imageInput" accept="image/*" hidden>
-                    <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
-                        Select Image
+                    <p>Upload your images to start coloring. The reference image is optional but helps you see which colors to use!</p>
+                    
+                    <div class="upload-options">
+                        <div class="upload-option">
+                            <label for="outlineInput" class="upload-label">
+                                <i data-lucide="file-plus"></i>
+                                <span>1. Outline Image (Required)</span>
+                            </label>
+                            <input type="file" id="outlineInput" accept="image/*" hidden>
+                            <span id="outlineName" class="file-name">No file selected</span>
+                        </div>
+                        
+                        <div class="upload-option">
+                            <label for="referenceInput" class="upload-label">
+                                <i data-lucide="image"></i>
+                                <span>2. Colored Reference (Optional)</span>
+                            </label>
+                            <input type="file" id="referenceInput" accept="image/*" hidden>
+                            <span id="referenceName" class="file-name">No file selected</span>
+                        </div>
+                    </div>
+
+                    <button id="startColoringBtn" class="upload-btn" disabled>
+                        Start Coloring
                     </button>
                 </div>
             </div>
             <div class="canvas-wrapper" id="canvasWrapper" style="position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: white;">
                 <canvas id="colorCanvas" style="position: absolute; top: 0; left: 0;"></canvas>
+                <canvas id="refCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s ease;"></canvas>
                 <canvas id="lineCanvas" style="position: relative; top: 0; left: 0; pointer-events: none;"></canvas>
             </div>
             
             <div class="zoom-indicator" id="zoomIndicator">100%</div>
             
             <div class="canvas-controls">
+                <button id="toggleReference" class="control-btn" title="Toggle Reference View" style="display: none;">
+                    <i data-lucide="eye"></i>
+                </button>
                 <button id="zoomIn" class="control-btn" title="Zoom In">
                     <i data-lucide="zoom-in"></i>
                 </button>
