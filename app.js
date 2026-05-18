@@ -118,7 +118,8 @@ function setupEventListeners() {
     });
 
     // More palette toggle
-    document.getElementById('morePaletteBtn').addEventListener('click', () => {
+    document.getElementById('morePaletteBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
         document.getElementById('morePaletteDropdown').classList.toggle('hidden');
     });
 
@@ -133,7 +134,8 @@ function setupEventListeners() {
     });
 
     // More recent toggle
-    document.getElementById('moreRecentBtn').addEventListener('click', () => {
+    document.getElementById('moreRecentBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
         document.getElementById('moreRecentDropdown').classList.toggle('hidden');
     });
 
