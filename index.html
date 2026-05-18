@@ -40,20 +40,28 @@
         </div>
 
         <div class="header-center">
-            <div id="colorPalette" class="header-palette">
-                <!-- Basic Palette -->
-                <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
-                <div class="color-swatch" style="background: #ef4444;" data-color="#ef4444"></div>
-                <div class="color-swatch" style="background: #f97316;" data-color="#f97316"></div>
-                <div class="color-swatch" style="background: #eab308;" data-color="#eab308"></div>
-                <div class="color-swatch" style="background: #22c55e;" data-color="#22c55e"></div>
-                <div class="color-swatch" style="background: #06b6d4;" data-color="#06b6d4"></div>
-                <div class="color-swatch" style="background: #3b82f6;" data-color="#3b82f6"></div>
-                <div class="color-swatch" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
-                <div class="color-swatch" style="background: #ec4899;" data-color="#ec4899"></div>
-                <div class="color-swatch" style="background: #78350f;" data-color="#78350f"></div>
-                <div class="color-swatch" style="background: #64748b;" data-color="#64748b"></div>
-                <div class="color-swatch" style="background: #ffffff;" data-color="#ffffff"></div>
+            <div id="colorPaletteContainer" style="display: flex; align-items: center; gap: 0.25rem; position: relative;">
+                <div id="colorPalette" class="header-palette">
+                    <!-- Basic Palette (First 6) -->
+                    <div class="color-swatch active" style="background: #000000;" data-color="#000000"></div>
+                    <div class="color-swatch" style="background: #ef4444;" data-color="#ef4444"></div>
+                    <div class="color-swatch" style="background: #f97316;" data-color="#f97316"></div>
+                    <div class="color-swatch" style="background: #eab308;" data-color="#eab308"></div>
+                    <div class="color-swatch" style="background: #22c55e;" data-color="#22c55e"></div>
+                    <div class="color-swatch" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                </div>
+                <button id="morePaletteBtn" class="action-btn" style="width: 24px; height: 28px; padding: 0;" title="More Palette Colors">
+                    <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+                </button>
+                <div id="morePaletteDropdown" class="recent-dropdown hidden">
+                    <!-- Remaining Palette Colors -->
+                    <div class="color-swatch" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                    <div class="color-swatch" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                    <div class="color-swatch" style="background: #ec4899;" data-color="#ec4899"></div>
+                    <div class="color-swatch" style="background: #78350f;" data-color="#78350f"></div>
+                    <div class="color-swatch" style="background: #64748b;" data-color="#64748b"></div>
+                    <div class="color-swatch" style="background: #ffffff;" data-color="#ffffff"></div>
+                </div>
             </div>
             
             <div class="header-divider"></div>

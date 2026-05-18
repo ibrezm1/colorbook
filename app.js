@@ -35,7 +35,7 @@ const brushSize = document.getElementById('brushSize');
 const sizeValue = document.getElementById('sizeValue');
 const opacity = document.getElementById('opacity');
 const opacityValue = document.getElementById('opacityValue');
-const colorPalette = document.getElementById('colorPalette');
+
 const customColor = document.getElementById('customColor');
 const clearBtn = document.getElementById('clearBtn');
 const downloadBtn = document.getElementById('downloadBtn');
@@ -107,12 +107,19 @@ function setupEventListeners() {
         opacityValue.textContent = e.target.value;
     });
 
-    colorPalette.addEventListener('click', (e) => {
+    // Main Palette Click
+    document.getElementById('colorPaletteContainer').addEventListener('click', (e) => {
         if (e.target.classList.contains('color-swatch')) {
             const color = e.target.dataset.color;
             setColor(color);
             customColor.value = color;
+            document.getElementById('morePaletteDropdown').classList.add('hidden');
         }
+    });
+
+    // More palette toggle
+    document.getElementById('morePaletteBtn').addEventListener('click', () => {
+        document.getElementById('morePaletteDropdown').classList.toggle('hidden');
     });
 
     // Recent Colors Click
@@ -130,13 +137,23 @@ function setupEventListeners() {
         document.getElementById('moreRecentDropdown').classList.toggle('hidden');
     });
 
-    // Close dropdown on outside click
+    // Close dropdowns on outside click
     document.addEventListener('click', (e) => {
-        const container = document.getElementById('recentColorsContainer');
-        if (container && !container.contains(e.target)) {
-            const dropdown = document.getElementById('moreRecentDropdown');
-            if (dropdown && !dropdown.classList.contains('hidden')) {
-                dropdown.classList.add('hidden');
+        // Recent Colors Dropdown
+        const recentContainer = document.getElementById('recentColorsContainer');
+        if (recentContainer && !recentContainer.contains(e.target)) {
+            const recentDropdown = document.getElementById('moreRecentDropdown');
+            if (recentDropdown && !recentDropdown.classList.contains('hidden')) {
+                recentDropdown.classList.add('hidden');
+            }
+        }
+        
+        // Palette Dropdown
+        const paletteContainer = document.getElementById('colorPaletteContainer');
+        if (paletteContainer && !paletteContainer.contains(e.target)) {
+            const paletteDropdown = document.getElementById('morePaletteDropdown');
+            if (paletteDropdown && !paletteDropdown.classList.contains('hidden')) {
+                paletteDropdown.classList.add('hidden');
             }
         }
     });
