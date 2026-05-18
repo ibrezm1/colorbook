@@ -27,6 +27,7 @@ const colorCtx = colorCanvas.getContext('2d', { willReadFrequently: true });
 const outlineInput = document.getElementById('outlineInput');
 const referenceInput = document.getElementById('referenceInput');
 const startColoringBtn = document.getElementById('startColoringBtn');
+const blankCanvasBtn = document.getElementById('blankCanvasBtn');
 const uploadOverlay = document.getElementById('uploadOverlay');
 const penTool = document.getElementById('penTool');
 const fillTool = document.getElementById('fillTool');
@@ -115,19 +116,38 @@ function setupEventListeners() {
     });
 
     // Recent Colors Click
-    document.getElementById('recentColors').addEventListener('click', (e) => {
+    document.getElementById('recentColorsContainer').addEventListener('click', (e) => {
         if (e.target.classList.contains('color-swatch')) {
             const color = e.target.dataset.color;
             setColor(color, false); // Don't add to history again if clicked from history
             customColor.value = color;
+            document.getElementById('moreRecentDropdown').classList.add('hidden');
         }
     });
 
-    customColor.addEventListener('input', (e) => setColor(e.target.value));
+    // More recent toggle
+    document.getElementById('moreRecentBtn').addEventListener('click', () => {
+        document.getElementById('moreRecentDropdown').classList.toggle('hidden');
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('recentColorsContainer');
+        if (container && !container.contains(e.target)) {
+            const dropdown = document.getElementById('moreRecentDropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        }
+    });
+
+    customColor.addEventListener('input', (e) => setColor(e.target.value, false));
+    customColor.addEventListener('change', (e) => updateRecentColors(e.target.value));
     
     outlineInput.addEventListener('change', (e) => handleFileSelection(e, 'outline'));
     referenceInput.addEventListener('change', (e) => handleFileSelection(e, 'reference'));
     startColoringBtn.addEventListener('click', startColoring);
+    blankCanvasBtn.addEventListener('click', () => processImages(null, null));
 
     // Zoom/Pan/Draw Event Listeners
     canvasWrapper.addEventListener('pointerdown', handlePointerDown);
@@ -140,7 +160,26 @@ function setupEventListeners() {
     document.addEventListener('gesturestart', (e) => e.preventDefault());
     document.addEventListener('gesturechange', (e) => e.preventDefault());
     document.addEventListener('touchstart', (e) => {
+        if (window.visualViewport && window.visualViewport.scale > 1.01) return;
         if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', (e) => {
+        if (window.visualViewport && window.visualViewport.scale > 1.01) return;
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    
+    // Prevent double-tap to zoom on iPad
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            // Only prevent if we're not tapping an input or label
+            const tag = e.target.tagName.toLowerCase();
+            if (tag !== 'input' && tag !== 'label') {
+                e.preventDefault();
+            }
+        }
+        lastTouchEnd = now;
     }, { passive: false });
 
     // Prevent context menu (Save Image popup) on the canvas
@@ -189,6 +228,23 @@ function setupEventListeners() {
         themeToggle.innerHTML = `<i data-lucide="moon"></i>`;
         lucide.createIcons();
     }
+
+    // Viewport Zoom Escape Hatch
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleViewportChange);
+        window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+}
+
+function handleViewportChange() {
+    const overlay = document.getElementById('zoomWarningOverlay');
+    if (!overlay) return;
+    
+    if (window.visualViewport.scale > 1.01) {
+        overlay.style.display = 'flex';
+    } else {
+        overlay.style.display = 'none';
+    }
 }
 
 function setTool(tool) {
@@ -223,8 +279,8 @@ function updateRecentColors(color) {
     state.recentColors = state.recentColors.filter(c => c !== color);
     // Add to front
     state.recentColors.unshift(color);
-    // Keep only 5
-    if (state.recentColors.length > 5) {
+    // Keep up to 15 colors
+    if (state.recentColors.length > 15) {
         state.recentColors.pop();
     }
     
@@ -233,16 +289,36 @@ function updateRecentColors(color) {
 
 function renderRecentColors() {
     const container = document.getElementById('recentColors');
+    const dropdown = document.getElementById('moreRecentDropdown');
+    const moreBtn = document.getElementById('moreRecentBtn');
+    
     if (state.recentColors.length === 0) {
         container.innerHTML = '';
+        moreBtn.style.display = 'none';
         return;
     }
 
-    container.innerHTML = state.recentColors.map(color => `
+    const top3 = state.recentColors.slice(0, 3);
+    const rest = state.recentColors.slice(3);
+
+    container.innerHTML = top3.map(color => `
         <div class="color-swatch ${color === state.color ? 'active' : ''}" 
              style="background: ${color};" 
              data-color="${color}"></div>
     `).join('');
+
+    if (rest.length > 0) {
+        moreBtn.style.display = 'flex';
+        dropdown.innerHTML = rest.map(color => `
+            <div class="color-swatch ${color === state.color ? 'active' : ''}" 
+                 style="background: ${color};" 
+                 data-color="${color}"></div>
+        `).join('');
+    } else {
+        moreBtn.style.display = 'none';
+        dropdown.innerHTML = '';
+        dropdown.classList.add('hidden');
+    }
 }
 
 function handleFileSelection(e, type) {
@@ -297,8 +373,18 @@ function loadImage(file) {
 function processImages(outlineImg, referenceImg) {
     // Keep internal canvas resolution at full image size (up to 8K)
     const MAX_CANVAS_DIM = 8192;
-    let width = outlineImg.width;
-    let height = outlineImg.height;
+    let width, height;
+    
+    if (outlineImg) {
+        width = outlineImg.width;
+        height = outlineImg.height;
+    } else {
+        // Blank canvas: use container size
+        const container = document.getElementById('container');
+        const padding = 60;
+        width = Math.max(800, container.clientWidth - padding);
+        height = Math.max(600, container.clientHeight - padding);
+    }
 
     if (width > MAX_CANVAS_DIM || height > MAX_CANVAS_DIM) {
         const ratio = Math.min(MAX_CANVAS_DIM / width, MAX_CANVAS_DIM / height);
@@ -340,32 +426,37 @@ function processImages(outlineImg, referenceImg) {
     // Clear ref canvas
     refCtx.clearRect(0, 0, width, height);
     
-    // Process outline lines
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = width;
-    tempCanvas.height = height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.fillStyle = 'white';
-    tempCtx.fillRect(0, 0, width, height);
-    tempCtx.drawImage(outlineImg, 0, 0, width, height);
-    
-    const imageData = tempCtx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (outlineImg) {
+        // Process outline lines
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.fillStyle = 'white';
+        tempCtx.fillRect(0, 0, width, height);
+        tempCtx.drawImage(outlineImg, 0, 0, width, height);
         
-        if (gray > 140) {
-            data[i + 3] = 0; // Transparent
-        } else {
-            data[i] = 0;
-            data[i + 1] = 0;
-            data[i + 2] = 0;
-            data[i + 3] = 255; // Opaque Black
+        const imageData = tempCtx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            
+            if (gray > 140) {
+                data[i + 3] = 0; // Transparent
+            } else {
+                data[i] = 0;
+                data[i + 1] = 0;
+                data[i + 2] = 0;
+                data[i + 3] = 255; // Opaque Black
+            }
         }
+        lineCtx.putImageData(imageData, 0, 0);
+    } else {
+        // Blank canvas: clear line layer entirely
+        lineCtx.clearRect(0, 0, width, height);
     }
-    lineCtx.putImageData(imageData, 0, 0);
 
     // Process reference image if available
     if (referenceImg) {

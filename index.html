@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ChromaSketch | Premium AI Coloring Book</title>
     
     <!-- iOS / PWA Optimizations -->
@@ -21,15 +21,21 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <div id="zoomWarningOverlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; color: white; flex-direction: column; align-items: center; justify-content: center; touch-action: auto; text-align: center; padding: 2rem; backdrop-filter: blur(8px);">
+        <i data-lucide="zoom-out" style="width: 64px; height: 64px; margin-bottom: 1rem; color: #38bdf8;"></i>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Browser Zoomed</h2>
+        <p style="font-size: 1.1rem; color: #94a3b8; max-width: 400px; line-height: 1.5;">The iPad browser page was accidentally zoomed in.</p>
+        <p style="font-size: 1.25rem; font-weight: bold; margin-top: 2rem; color: #f8fafc; background: rgba(255,255,255,0.1); padding: 1rem 2rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.2);">Pinch your fingers together anywhere on the screen to reset zoom.</p>
+    </div>
     <header>
         <div class="logo-container">
-            <h1>ChromaSketch</h1>
-            <div id="activeToolIcon" class="active-tool-badge" title="Active Tool">
-                <i data-lucide="pen-tool"></i>
-            </div>
             <div id="publishStatus" class="publish-badge">
                 <span class="status-dot"></span>
                 <span id="publishTime">checking status...</span>
+            </div>
+            <h1>CSkch</h1>
+            <div id="activeToolIcon" class="active-tool-badge" title="Active Tool">
+                <i data-lucide="pen-tool"></i>
             </div>
         </div>
 
@@ -52,8 +58,16 @@
             
             <div class="header-divider"></div>
             
-            <div id="recentColors" class="header-palette recent">
-                <!-- Dynamically filled -->
+            <div id="recentColorsContainer" style="display: flex; align-items: center; gap: 0.25rem; position: relative;">
+                <div id="recentColors" class="header-palette recent">
+                    <!-- Dynamically filled -->
+                </div>
+                <button id="moreRecentBtn" class="action-btn" style="width: 24px; height: 28px; display: none; padding: 0;" title="More Recent Colors">
+                    <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+                </button>
+                <div id="moreRecentDropdown" class="recent-dropdown hidden">
+                    <!-- Dynamically filled -->
+                </div>
             </div>
 
             <div class="header-divider"></div>
@@ -122,13 +136,13 @@
                 <div class="upload-card">
                     <i data-lucide="image-plus"></i>
                     <h2>Create Coloring Page</h2>
-                    <p>Upload your images to start coloring. The reference image is optional but helps you see which colors to use!</p>
+                    <p>Upload an outline image to start coloring, or just open a blank canvas to free-draw!</p>
                     
                     <div class="upload-options">
                         <div class="upload-option">
                             <label for="outlineInput" class="upload-label">
                                 <i data-lucide="file-plus"></i>
-                                <span>1. Outline Image (Required)</span>
+                                <span>1. Outline Image</span>
                             </label>
                             <input type="file" id="outlineInput" accept="image/*" hidden>
                             <span id="outlineName" class="file-name">No file selected</span>
@@ -144,9 +158,19 @@
                         </div>
                     </div>
 
-                    <button id="startColoringBtn" class="upload-btn" disabled>
-                        Start Coloring
-                    </button>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1.5rem;">
+                        <button id="startColoringBtn" class="upload-btn" style="margin-top: 0; width: 100%;" disabled>
+                            Start Coloring
+                        </button>
+                        
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                            &mdash; OR &mdash;
+                        </div>
+                        
+                        <button id="blankCanvasBtn" class="upload-btn" style="margin-top: 0; width: 100%; background: transparent; border: 1px solid var(--glass-border); color: var(--text-primary);">
+                            Start Blank Canvas
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="canvas-wrapper" id="canvasWrapper" style="position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: white;">
